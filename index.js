@@ -1,4 +1,4 @@
-import {h} from 'vue';
+import { h } from "vue";
 
 const defineDescriptor = (src, dest, name) => {
   // eslint-disable-next-line no-prototype-builtins
@@ -13,7 +13,7 @@ const merge = (objs) => {
   objs.forEach((obj) => {
     obj &&
       Object.getOwnPropertyNames(obj).forEach((name) =>
-        defineDescriptor(obj, res, name),
+        defineDescriptor(obj, res, name)
       );
   });
   return res;
@@ -24,7 +24,11 @@ const buildFromProps = (obj, props) => {
   props.forEach((prop) => defineDescriptor(obj, res, prop));
   return res;
 };
-
+/* This fork of vue3-runtime-template plugin has been made to suit the needs of the composition api
+ * in particular, the necessity of our project to use setup() instead of data, computed, props, methods etc.
+ * If you wish to continue using the options api, then this fork is not gonna work for you.
+ * Instead, you shall stick to the original vue3-runtime-template solution
+ */
 export default {
   props: {
     template: String,
@@ -37,66 +41,38 @@ export default {
   render() {
     if (this.template) {
       const parent = this.parent || this.$parent;
-      const {
-        $data: parentData = {},
-        $props: parentProps = {},
-        $options: parentOptions = {},
-      } = parent;
-      const {
-        components: parentComponents = {},
-        computed: parentComputed = {},
-        methods: parentMethods = {},
-      } = parentOptions;
-      const {
-        $data = {},
-        $props = {},
-        $options: {methods = {}, computed = {}, components = {}} = {},
-      } = this;
+      const { $options: parentOptions = {} } = parent;
+
+      const { components: parentComponents = {} } = parentOptions;
+      const { $options: { components = {} } = {} } = this;
       const passthrough = {
-        $data: {},
-        $props: {},
-        $options: {},
+        $setup: {},
         components: {},
-        computed: {},
         methods: {},
       };
 
-      // build new objects by removing keys if already exists (e.g. created by mixins)
-      Object.keys(parentData).forEach((e) => {
-        if (typeof $data[e] === 'undefined') {
-          passthrough.$data[e] = parentData[e];
+      Object.keys(parent).forEach((e) => {
+        if (typeof parent[e] === "function") {
+          // Methods must be handled separately from the rest of the setup
+          passthrough.methods[e] = parent[e];
+        } else {
+          passthrough.$setup[e] = parent[e];
         }
       });
-      Object.keys(parentProps).forEach((e) => {
-        if (typeof $props[e] === 'undefined') {
-          passthrough.$props[e] = parentProps[e];
-        }
-      });
-      Object.keys(parentMethods).forEach((e) => {
-        if (typeof methods[e] === 'undefined') {
-          passthrough.methods[e] = parentMethods[e];
-        }
-      });
-      Object.keys(parentComputed).forEach((e) => {
-        if (typeof computed[e] === 'undefined') {
-          passthrough.computed[e] = parentComputed[e];
-        }
-      });
+
       Object.keys(parentComponents).forEach((e) => {
-        if (typeof components[e] === 'undefined') {
+        if (typeof components[e] === "undefined") {
           passthrough.components[e] = parentComponents[e];
         }
       });
 
+      const setupKeys = Object.keys(passthrough.$setup || {});
       const methodKeys = Object.keys(passthrough.methods || {});
-      const dataKeys = Object.keys(passthrough.$data || {});
-      const propKeys = Object.keys(passthrough.$props || {});
       const templatePropKeys = Object.keys(this.templateProps);
-      const allKeys = dataKeys.concat(propKeys).concat(methodKeys).concat(templatePropKeys);
+      const allKeys = setupKeys.concat(methodKeys).concat(templatePropKeys);
       const methodsFromProps = buildFromProps(parent, methodKeys);
       const finalProps = merge([
-        passthrough.$data,
-        passthrough.$props,
+        passthrough.$setup,
         methodsFromProps,
         this.templateProps,
       ]);
@@ -104,7 +80,7 @@ export default {
       const provide = this.$parent.$.provides ? this.$parent.$.provides : {}; // Avoids Vue warning
 
       const dynamic = {
-        template: this.template || '<div></div>',
+        template: this.template || "<div></div>",
         props: allKeys,
         computed: passthrough.computed,
         components: passthrough.components,
@@ -112,7 +88,7 @@ export default {
       };
       // debugger;
 
-      return h(dynamic, {...finalProps});
+      return h(dynamic, { ...finalProps });
     }
   },
 };
