@@ -34,14 +34,14 @@ const removeDuplicatesFromArray = (arr) => {
 };
 
 /*
- * This fork has been made in order to make use of the plugin with the new composition api possible. Currently the original vue3-runtime-template plugin 
+ * This fork has been made in order to make use of the plugin with the new composition api possible. Currently the original vue3-runtime-template plugin
  * only works with the options api. This fork therefore should be able to serve our needs of using both the composition api and the options api or even the mix of both.
  * Consider avoiding using the plugin with components built with the mix of both apis, however, since it might override some important model data.
- * 
+ *
  * For the composition api you should pass an object of type { '[attribute-name]': attribute } to setupData props (apart from passing the template string to template props),
  * which must contain all properties of your component
- * that are referenced in the template you are going to compile with the plugin. This includes: data, props, computed values, methods etc.
- * 
+ * that are referenced in the template you are going to compile with the plugin. This includes: data, computed values, and methods. Props do not need to be included in setupData.
+ *
  * If you use the options API, you don't need to pass such an object to setupData. Only provide the template string to the props.
  */
 export default {
@@ -133,7 +133,7 @@ export default {
       if (allKeysWithoutDuplicates.length !== allKeys.length) {
         console.warn(
           "vue3-runtime-template:",
-          `Apparently there are duplicates in the component's model. This could result from using both the composition api and the options api, where properties with duplicate names are defined. We strongly recommend using either the composition api or the options api only, since otherwise you risk overriding some data.`
+          `Apparently there are duplicates in the component's model. This could result from using both the composition api and the options api, where properties with duplicate names are defined, as well as from passing props into setupData. We strongly recommend using either the composition api or the options api only, since otherwise you risk overriding some data.`
         );
       }
 
