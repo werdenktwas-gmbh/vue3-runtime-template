@@ -30,7 +30,7 @@ const extendDestObjFromProps = (obj, props, dest) => {
 };
 
 const removeDuplicatesFromArray = (arr) => {
-  return [...new Set(arr)];
+  return arr.filter((item, index) => arr.indexOf(item) === index);
 };
 
 /*
